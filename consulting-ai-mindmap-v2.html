@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>How I Use AI for My Day-to-Day Consulting Work — Mindmap</title>
+<style>
+  :root{
+    --navy:#000827;            /* Intellia deep navy */
+    --blue:#1f3c88;            /* mid blue (structure / primary accent) */
+    --blue-2:#2b50a8;
+    --blue-soft:#e7ecf8;
+    --accent:#FF6200;          /* single sparing accent */
+    --accent-soft:#fff1e8;
+    --bg:#f4f6fc;              /* light canvas */
+    --card:#ffffff;
+    --card-2:#fbfcff;
+    --border:#dde4f2;
+    --border-strong:#c4cfe6;
+    --line:#bcc8e4;            /* hierarchy connectors */
+    --ink:#0c1430;             /* primary text */
+    --ink-2:#41507a;           /* secondary text */
+    --muted:#7a87a8;           /* tertiary */
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:
+      radial-gradient(1100px 700px at 80% -10%, #eaf0ff 0%, rgba(234,240,255,0) 60%),
+      radial-gradient(900px 600px at 0% 100%, #eef1fb 0%, rgba(238,241,251,0) 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Inter","Segoe UI",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+    overflow:hidden;-webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Chrome ---------- */
+  .overlay{position:fixed;z-index:30;pointer-events:none}
+  .topbar{top:0;left:0;padding:22px 26px 28px;max-width:470px;
+    background:linear-gradient(135deg,rgba(244,246,252,.97) 0%,rgba(244,246,252,.8) 65%,rgba(244,246,252,0) 100%);}
+  .eyebrow{font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:9px}
+  .map-title{font-size:25px;line-height:1.18;font-weight:600;color:var(--navy);margin:0 0 11px}
+  .eyebrow b{color:var(--accent);font-weight:700}
+  .subtitle{font-size:14px;line-height:1.55;color:var(--ink-2);max-width:420px;font-weight:400}
+
+  .legend{left:26px;bottom:24px;font-size:11.5px;color:var(--ink-2);
+    background:rgba(255,255,255,.82);border:1px solid var(--border);border-radius:12px;
+    padding:13px 15px;backdrop-filter:blur(6px);max-width:300px;box-shadow:0 6px 20px rgba(20,40,90,.08)}
+  .legend .lr{display:flex;align-items:center;gap:10px;margin:7px 0}
+  .legend .lr:first-child{margin-top:0}
+  .legend .swatch{width:26px;height:0;flex:none}
+  .sw-pc{border-top:2px solid var(--line);border-color:#9fb0d8}
+  .sw-cross{border-top:2px dashed var(--accent)}
+  .legend .tip{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);color:var(--muted);line-height:1.5}
+
+  .controls{right:24px;bottom:24px;display:flex;gap:8px;pointer-events:auto}
+  .controls button{pointer-events:auto;cursor:pointer;width:40px;height:40px;border-radius:10px;
+    background:#fff;border:1px solid var(--border);color:var(--ink);font-size:17px;line-height:1;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(20,40,90,.08);
+    transition:border-color .15s,color .15s,background .15s}
+  .controls button:hover{border-color:var(--accent);color:var(--accent)}
+  .controls button.wide{width:auto;padding:0 14px;font-size:12px;letter-spacing:.03em;font-weight:600}
+
+  /* ---------- Ambient background ---------- */
+  .bg-orbs{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+  .bg-orbs::before,.bg-orbs::after{content:"";position:absolute;border-radius:50%;filter:blur(72px);opacity:.55}
+  .bg-orbs::before{width:560px;height:560px;background:radial-gradient(circle,#d7e4ff,transparent 70%);
+    top:-130px;left:-90px;animation:drift1 26s ease-in-out infinite}
+  .bg-orbs::after{width:620px;height:620px;background:radial-gradient(circle,#ffe4d3,transparent 70%);
+    bottom:-170px;right:-130px;animation:drift2 32s ease-in-out infinite}
+  @keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(70px,46px)}}
+  @keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-56px,-44px)}}
+
+  /* ---------- Stage ---------- */
+  #viewport{position:fixed;inset:0;overflow:hidden;cursor:grab;z-index:1}
+  #viewport.dragging{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #edges{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+
+  /* ---------- Nodes — uniform width, one consistent size ---------- */
+  .node{
+    position:absolute;transform:translate(-50%,-50%);
+    width:212px;min-height:54px;
+    display:flex;flex-direction:column;justify-content:center;
+    background:var(--card);border:1px solid var(--border);border-radius:12px;
+    padding:11px 14px;cursor:pointer;user-select:none;
+    box-shadow:0 4px 14px rgba(22,44,98,.07);z-index:1;
+    transition:opacity .16s ease,border-color .16s ease,box-shadow .2s ease,transform .22s cubic-bezier(.34,1.56,.64,1);
+    will-change:left,top,opacity;
+  }
+  .node .ttl{font-size:12.5px;line-height:1.34;color:var(--ink);font-weight:500}
+  .node .ttl.has-ico{display:flex;align-items:center;gap:9px}
+  .node .ico{flex:none;width:20px;height:20px;display:block;border-radius:5px;
+    box-shadow:0 1px 3px rgba(22,44,98,.18)}
+  .node .ico svg{display:block}
+  .node .tag{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--blue);
+    font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:7px}
+  .node .role{font-size:10.5px;line-height:1.42;color:var(--muted);font-style:italic;margin-top:6px;font-weight:400}
+
+  /* expand indicator (bottom-center, fitting the downward flow) */
+  .node .knob{position:absolute;left:50%;bottom:-11px;transform:translateX(-50%);
+    width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--border-strong);
+    color:var(--blue);font-size:14px;line-height:20px;text-align:center;font-weight:700;
+    box-shadow:0 2px 6px rgba(22,44,98,.12);transition:transform .2s cubic-bezier(.34,1.56,.64,1),border-color .15s,color .15s,background .15s;z-index:2}
+  .node:hover .knob{border-color:var(--accent);color:var(--accent);transform:translateX(-50%) scale(1.18)}
+  .node.open .knob{background:var(--blue);border-color:var(--blue);color:#fff}
+
+  .node:hover{border-color:var(--border-strong);box-shadow:0 12px 28px rgba(22,44,98,.16);
+    transform:translate(-50%,-50%) scale(1.045);z-index:6}
+  .node.hl{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,98,0,.2),0 10px 28px rgba(255,98,0,.16);z-index:5}
+  .node.dim{opacity:.4 !important}
+
+  /* edge motion */
+  @keyframes dashflow{to{stroke-dashoffset:-32}}
+  #edges .xflow{animation:dashflow 1.7s linear infinite}
+  #edges .xflow-hi{animation:dashflow .9s linear infinite}
+  @keyframes centerPulse{
+    0%,100%{box-shadow:0 10px 30px rgba(0,8,39,.28),0 0 0 0 rgba(255,98,0,0)}
+    50%{box-shadow:0 12px 34px rgba(0,8,39,.32),0 0 0 8px rgba(255,98,0,.055)}}
+
+  /* center / root */
+  .node.center{width:230px;background:linear-gradient(180deg,#0a1444,var(--navy));border-color:var(--navy);
+    box-shadow:0 10px 30px rgba(0,8,39,.28);animation:centerPulse 3.8s ease-in-out infinite}
+  .node.center .ttl{font-size:17px;line-height:1.22;font-weight:500;color:#fff}
+  .node.center .kicker{font-size:9.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:7px}
+
+  /* primary branches — colored header bar, uniform width */
+  .node.primary{border-top:3px solid var(--blue);background:linear-gradient(180deg,#fbfcff,#fff)}
+  .node.primary .ttl{font-size:14px;font-weight:600;color:var(--navy)}
+
+  /* branch 6 — operating-layer band treatment (distinct accent) */
+  .node.band{border-top:3px solid var(--accent);background:linear-gradient(180deg,var(--accent-soft),#fff)}
+  .node.band .tag{color:var(--accent)}
+
+  /* sub-branch */
+  .node.sub{background:var(--blue-soft);border-color:#cfd9f0}
+  .node.sub .ttl{font-size:12px;font-weight:600;color:var(--blue)}
+
+  /* leaf */
+  .node.leaf .ttl{font-size:11.5px;font-weight:400;color:var(--ink-2);line-height:1.4}
+
+  /* decision-point leaf (a choice, not a tool) — star marker + accent */
+  .node.decision{border-color:var(--accent);background:linear-gradient(180deg,var(--accent-soft),#fff)}
+  .node.decision .ttl{color:var(--navy);font-weight:600}
+  .node .star{flex:none;color:var(--accent);font-size:14px;line-height:1}
+
+  /* action node (a to-do, not a learning item) — green checkbox + accent */
+  .node.action{border-left:4px solid #1F9D6B;background:linear-gradient(180deg,#eef9f3,#fff)}
+  .node.action .ttl{color:var(--navy)}
+  .node .check{flex:none;display:inline-flex;align-items:center}
+  .node .check svg{display:block}
+
+  /* tier leaf (source hierarchy, level 4) */
+  .node.tier{border-left:4px solid var(--muted)}
+  .node.tier.t1{border-left-color:#1f9d6b}
+  .node.tier.t2{border-left-color:#c9962a}
+  .node.tier.t3{border-left-color:#cf5535}
+
+  /* respect reduced-motion preferences */
+  @media (prefers-reduced-motion: reduce){
+    .bg-orbs::before,.bg-orbs::after,.node.center,#edges .xflow,#edges .xflow-hi{animation:none !important}
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-orbs"></div>
+<div id="viewport"><div id="world"><svg id="edges"></svg></div></div>
+
+<div class="overlay topbar">
+  <div class="eyebrow"><b>Personal Framework</b></div>
+  <h1 class="map-title">How I Use AI for My Day-to-Day Consulting Work</h1>
+  <p class="subtitle">A map of my mental model for using AI in practice: the tools I reach for, the way I think about each stage of a task, and how I keep the work reliable.</p>
+</div>
+
+<div class="overlay legend">
+  <div class="lr"><span class="swatch sw-pc"></span><span>Branch &amp; hierarchy</span></div>
+  <div class="lr"><span class="swatch sw-cross"></span><span>Cross-link — one idea, many homes</span></div>
+  <div class="tip">Click a node to expand · drag to pan · scroll to zoom · hover to trace the path back to the top.</div>
+</div>
+
+<div class="overlay controls">
+  <button id="btn-expand" class="wide" title="Expand everything">Expand all</button>
+  <button id="btn-reset" class="wide" title="Collapse to branches">Reset</button>
+  <button id="btn-out" title="Zoom out">−</button>
+  <button id="btn-fit" title="Fit to screen">⤢</button>
+  <button id="btn-in" title="Zoom in">+</button>
+</div>
+
+<script>
+/* =========================================================================
+   DATA — verbatim content. ids set only where a cross-link anchors.
+   ========================================================================= */
+const DATA = {
+  id:"root", type:"center", kicker:"The one sentence", title:"Using AI for Consulting Work",
+  children:[
+    { id:"b1", type:"primary", tag:"01", title:"Set Yourself Up",
+      role:"The prerequisite: everything before you touch a task.",
+      children:[
+        { type:"sub", title:"Mindset", children:[
+          {type:"leaf", title:"AI augments judgment, you own the answer"},
+          {type:"leaf", title:"Match the tool to the task"},
+          {type:"leaf", title:"Quality in, quality out"},
+          {type:"leaf", title:"Verify before you trust"},
+        ]},
+        { type:"sub", title:"Make it yours (personalization)", children:[
+          {type:"leaf", title:"Global instructions (standing rules applied to every chat)"},
+          {type:"leaf", title:"A "me" profile (your role, your context, how you work)"},
+          {type:"leaf", title:"Your writing style (output sounds like you, not like AI)"},
+        ]},
+      ]},
+
+    { id:"b2", type:"primary", tag:"02", title:"The Landscape",
+      role:"The environment: where you work and what you can add to it.",
+      children:[
+        { type:"sub", title:"Surfaces (where you work)", children:[
+          {type:"leaf", title:"Chat (fast, iterative, in-context)"},
+          {type:"leaf", title:"Cowork (agentic knowledge work)", children:[
+            {type:"leaf", title:"Read an entire Slack channel and summarize what was decided and what's still open"},
+            {type:"leaf", title:"Triage a full inbox: flag what needs a reply, draft the replies, surface anything urgent"},
+            {type:"leaf", title:"Organize a messy local folder: rename, sort into subfolders, remove duplicates"},
+            {type:"leaf", title:"Pull figures from many source files into one clean comparison table"},
+            {type:"leaf", title:"Turn a week of meeting notes into a single client status update"},
+          ]},
+          {type:"leaf", title:"Code (agentic build)", children:[
+            {type:"leaf", title:"Build a quick scraper for competitor pricing pages"},
+            {type:"leaf", title:"Spin up a small dashboard from a CSV (charts, filters)"},
+            {type:"leaf", title:"Write a script that reformats raw export data into a model's input layout"},
+            {type:"leaf", title:"Prototype a working web tool to demo an idea to a client"},
+            {type:"leaf", title:"Automate a repetitive file or data task end to end"},
+          ]},
+          {type:"leaf", title:"Design (visual canvas)", children:[
+            {type:"leaf", title:"Draft slide layouts for a deck and refine them by chatting"},
+            {type:"leaf", title:"Build a diagram (process flow, org chart, market map) and adjust live"},
+            {type:"leaf", title:"Mock up a one-pager or infographic from raw content"},
+            {type:"leaf", title:"Restyle existing visuals to match a client's brand"},
+            {type:"leaf", title:"Lay out a framework or 2x2 cleanly for a deliverable"},
+          ]},
+          {id:"surface-pick", type:"leaf", star:true, title:"When to pick which"},
+        ]},
+        { type:"sub", title:"Extensions (how you add capability)", children:[
+          {type:"leaf", title:"Plugins (app integrations)"},
+          {id:"skills-2b", type:"leaf", title:"Skills (packaged instructions and reusable expertise)", children:[
+            {type:"leaf", title:"A market sizing skill that always follows your firm's top-down/bottom-up methodology"},
+            {type:"leaf", title:"A writing style skill that strips AI vocabulary and matches your tone automatically"},
+            {type:"leaf", title:"A proposal skill that structures every bid: hook, proof point, gap disclosure, scoping question"},
+            {type:"leaf", title:"An email skill that outputs consulting-coded, concise, no filler language"},
+            {type:"leaf", title:"A source citation skill that always places the reference right next to the figure"},
+          ]},
+          {type:"leaf", title:"Connectors (live data and tool access)", children:[
+            {type:"leaf", title:"Pull open Asana or Linear tasks directly into a planning conversation"},
+            {type:"leaf", title:"Read your Google Drive files without copy-pasting anything into chat"},
+            {type:"leaf", title:"Search Slack for decisions or context across past threads"},
+            {type:"leaf", title:"Sync with your calendar to plan around real availability"},
+            {type:"leaf", title:"Query a live database or spreadsheet mid-conversation"},
+          ]},
+          {type:"leaf", star:true, title:"The distinction: plugins are apps, skills are instructions, connectors are data"},
+        ]},
+      ]},
+
+    { id:"b3", type:"primary", tag:"03", title:"Inputs",
+      role:"The engine, beat one: get raw material in.",
+      children:[
+        { type:"sub", title:"Web and competitor data", children:[
+          {type:"leaf", icon:"claude-chrome", title:"Claude in Chrome: scraping, competitor analysis, feature breakdown"},
+          {type:"leaf", icon:"webscraper", title:"Webscraper.io (structured scraping at scale)"},
+          {type:"leaf", icon:"wayback", title:"Wayback Machine (historical website data from years back)"},
+        ]},
+        { type:"sub", title:"Conversations and voice", children:[
+          {type:"leaf", icon:"assemblyai", title:"AssemblyAI (transcribing meetings that already happened)"},
+          {type:"leaf", icon:"wisprflow", title:"Wispr Flow (dictating your own thoughts in, fast)"},
+        ]},
+        { type:"sub", title:"Research and document synthesis", children:[
+          {type:"leaf", icon:"notebooklm", title:"NotebookLM (grounded Q&A over your own sources)"},
+          {id:"gpt-3c", type:"leaf", icon:"openai", title:"GPT deep research (open-web research, broad scans, source gathering)"},
+          {type:"leaf", icon:"github", title:"GitHub (pull in coding directories and repositories)"},
+        ]},
+      ]},
+
+    { id:"b4", type:"primary", tag:"04", title:"Analysis",
+      role:"The engine, beat two: turn material into thinking.",
+      children:[
+        { type:"sub", title:"AI as a thinking partner", children:[
+          {type:"leaf", title:"Devil's advocate and pushback"},
+          {type:"leaf", title:"Ask-me-questions mode"},
+          {type:"leaf", title:"Triangulate results across models and sources"},
+        ]},
+        { type:"sub", title:"Consulting rigor", children:[
+          {id:"skills-4b", type:"leaf", title:"Frameworks via skills (market sizing, etc.)"},
+          {id:"cite-4b", type:"leaf", title:"Cite the extractable source right next to each figure"},
+          {type:"leaf", title:"Use approved source types — know the hierarchy", children:[
+            {type:"tier", tier:1, title:"Top tier: peer-reviewed papers, official statistics and regulator filings"},
+            {type:"tier", tier:2, title:"Solid: reputable news, industry and analyst reports, company primary sources"},
+            {type:"tier", tier:3, title:"Use with caution, verify before citing: Reddit, LinkedIn, blogs, forums (signal and leads, not a number in a deliverable)"},
+          ]},
+          {type:"leaf", title:"Match the source to the claim (a market figure needs a primary source; a directional read can lean on softer ones)"},
+        ]},
+        { type:"sub", title:"Keeping output sharp over a long task", children:[
+          {type:"leaf", title:"Compacting, or switching to a fresh chat, to retain quality"},
+          {type:"leaf", title:"Project context and memory retention"},
+          {type:"leaf", title:"AI peer review of finished work"},
+        ]},
+      ]},
+
+    { id:"b5", type:"primary", tag:"05", title:"Outputs",
+      role:"The engine, beat three: turn thinking into a deliverable.",
+      children:[
+        { type:"sub", title:"Documents and data (plugins)", children:[
+          {type:"leaf", icon:"excel", title:"Excel (models, analysis)"},
+          {type:"leaf", icon:"word",  title:"Word (memos, reports)"},
+          {type:"leaf", icon:"ppt",   title:"PowerPoint (decks)"},
+        ]},
+        { type:"sub", title:"Polishing decks and visuals", children:[
+          {type:"leaf", title:"Design inspiration"},
+          {id:"gpt-5b", type:"leaf", title:"Image generation (incl. GPT)"},
+          {type:"leaf", title:"Aesthetic enhancement (icons, shadows, spacing)"},
+        ]},
+      ]},
+
+    { id:"b6", type:"primary", band:true, tag:"06 · Operating layer", title:"Efficiency",
+      role:"The operating layer: runs beneath inputs, analysis, and outputs alike.",
+      children:[
+        {id:"crossmodel-6", type:"leaf", title:"Cross-model use (right model per step)"},
+        {id:"modeltier-6", type:"leaf", title:"Model tiering (lighter vs heavier models by task weight)"},
+        {type:"leaf", title:"Markdown files for lean context"},
+        {type:"leaf", title:"In-chat results, skip needless document creation"},
+        {id:"skills-6", type:"leaf", title:"Skills (reuse instead of re-prompting)"},
+        {id:"gpt-6", type:"leaf", title:"GPT for basic questions (offload simple lookups, don't burn consulting-model context)"},
+      ]},
+
+    { id:"b7", type:"primary", tag:"07", title:"Guardrails",
+      role:"The constraint, and the bookend to Branch 1.",
+      children:[
+        {type:"leaf", title:"Confidence testing (does it know, or is it guessing)"},
+        {id:"source-7", type:"leaf", title:"Source credibility (prefer primary, verify everything)"},
+        {type:"leaf", title:"Sensitive and confidential information (what never goes in)"},
+      ]},
+  ]
+};
+
+const CROSSLINKS = [
+  {label:"Skills",         nodes:["skills-2b","skills-4b","skills-6"]},
+  {label:"Model tiering",  nodes:["surface-pick","modeltier-6"]},
+  {label:"Source citation",nodes:["cite-4b","source-7"]},
+  {label:"GPT",            nodes:["gpt-3c","gpt-5b","gpt-6"]},
+];
+
+/* =========================================================================
+   BUILD
+   ========================================================================= */
+const ORIGIN={x:3000,y:240};
+const byId=new Map(); let autoId=0;
+function build(node,parent,depth){
+  if(!node.id) node.id="n"+(autoId++);
+  node.parent=parent; node.depth=depth; node.expanded=false;
+  node.visible=depth<=1;
+  node.cur={x:0,y:0}; node.target={x:0,y:0};
+  node.opacity=node.visible?1:0; node.h=58;
+  byId.set(node.id,node);
+  (node.children||[]).forEach(c=>build(c,node,depth+1));
+}
+build(DATA,null,0);
+
+const world=document.getElementById('world');
+const svg=document.getElementById('edges');
+
+function getIcon(k){
+  const badge=(color,inner)=>`<svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="20" height="18" rx="4" fill="${color}"/>${inner}</svg>`;
+  const letter=(c,l)=>badge(c,`<text x="12" y="16.6" text-anchor="middle" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="13" font-weight="800" fill="#fff">${l}</text>`);
+  switch(k){
+    case 'excel': return letter('#1F8A4D','X');
+    case 'word':  return letter('#2B579A','W');
+    case 'ppt':   return letter('#C43E1C','P');
+    case 'claude-chrome': return badge('#D9684A','<path d="M8.6 6.2 L8.6 17.2 L11.3 14.4 L13.2 18.2 L14.9 17.4 L13 13.7 L16.5 13.7 Z" fill="#fff"/>');
+    case 'webscraper':   return badge('#16A6A6','<polygon points="12,5.4 16.6,8.2 16.6,14.8 12,17.6 7.4,14.8 7.4,8.2" fill="none" stroke="#fff" stroke-width="1.4"/><polygon points="12,8.3 14.2,9.7 14.2,13.3 12,14.7 9.8,13.3 9.8,9.7" fill="none" stroke="#fff" stroke-width="0.9"/>');
+    case 'wayback':      return badge('#A6271F','<path d="M5.4 9.2 L12 5.4 L18.6 9.2 Z" fill="#fff"/><rect x="6.6" y="10.4" width="1.5" height="5.2" fill="#fff"/><rect x="9.5" y="10.4" width="1.5" height="5.2" fill="#fff"/><rect x="13" y="10.4" width="1.5" height="5.2" fill="#fff"/><rect x="15.9" y="10.4" width="1.5" height="5.2" fill="#fff"/><rect x="5.3" y="16" width="13.4" height="1.6" fill="#fff"/>');
+    case 'assemblyai':   return badge('#2B3FD9','<path d="M6.4 16.6 L12 6.8 L17.6 16.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>');
+    case 'wisprflow':    return badge('#141414','<g fill="#fff"><rect x="5.8" y="9.6" width="1.7" height="4.8" rx="0.8"/><rect x="8.6" y="7" width="1.7" height="10" rx="0.8"/><rect x="11.4" y="8.6" width="1.7" height="6.8" rx="0.8"/><rect x="14.2" y="6.2" width="1.7" height="11.6" rx="0.8"/><rect x="17" y="9.6" width="1.7" height="4.8" rx="0.8"/></g>');
+    case 'notebooklm':   return badge('#1A73E8','<g fill="none" stroke="#fff" stroke-width="1.3"><path d="M6.8 13.5 A3 3 0 0 1 9.8 16.5"/><path d="M6.8 10.5 A6 6 0 0 1 12.8 16.5"/><path d="M6.8 7.5 A9 9 0 0 1 15.8 16.5"/></g><circle cx="6.8" cy="16.5" r="1" fill="#fff"/>');
+    case 'openai':       return badge('#0D0D0D','<g fill="none" stroke="#fff" stroke-width="1.1"><circle cx="15.3" cy="12" r="3"/><circle cx="13.65" cy="14.86" r="3"/><circle cx="10.35" cy="14.86" r="3"/><circle cx="8.7" cy="12" r="3"/><circle cx="10.35" cy="9.14" r="3"/><circle cx="13.65" cy="9.14" r="3"/></g>');
+    case 'github':       return badge('#181717','<g transform="translate(4,4)"><path fill="#fff" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></g>');
+    default: return '';
+  }
+}
+function makeEl(node){
+  const el=document.createElement('div');
+  let cls="node "+node.type;
+  if(node.type==="primary"&&node.band) cls+=" band";
+  if(node.type==="tier") cls+=" t"+node.tier;
+  if(node.star) cls+=" decision";
+  if(node.action) cls+=" action";
+  el.className=cls;
+  const hasKids=(node.children||[]).length>0;
+  let html="";
+  if(node.type==="center"){
+    html=`<div class="ttl">${node.title}</div>`;
+  } else if(node.type==="primary"){
+    html=`<div class="tag">${node.tag}</div><div class="ttl">${node.title}</div><div class="role">${node.role}</div>`;
+  } else if(node.icon){
+    html=`<div class="ttl has-ico"><span class="ico">${getIcon(node.icon)}</span><span>${node.title}</span></div>`;
+  } else if(node.star){
+    html=`<div class="ttl has-ico"><span class="star">★</span><span>${node.title}</span></div>`;
+  } else if(node.action){
+    html=`<div class="ttl has-ico"><span class="check"><svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="4.5" fill="none" stroke="#1F9D6B" stroke-width="2"/><path d="M7 12.4 L10.4 15.8 L17 8.6" fill="none" stroke="#1F9D6B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>${node.title}</span></div>`;
+  } else {
+    html=`<div class="ttl">${node.title}</div>`;
+  }
+  if(hasKids) html+=`<div class="knob">+</div>`;
+  el.innerHTML=html;
+  el.addEventListener('click',e=>{e.stopPropagation(); if(hasKids) toggle(node);});
+  el.addEventListener('mouseenter',()=>setHover(node));
+  el.addEventListener('mouseleave',()=>setHover(null));
+  node.el=el; world.appendChild(el);
+  node.h=el.offsetHeight||58;     // cache uniform-width height for connectors
+}
+byId.forEach(makeEl);
+
+/* =========================================================================
+   LAYOUT — tidy top-down tree (Reingold–Tilford, simple variant)
+   ========================================================================= */
+const X_GAP=246;      // horizontal spacing between leaf slots
+const Y_GAP=158;      // vertical spacing between levels
+
+function computeVisibility(node){
+  (node.children||[]).forEach(c=>{ c.visible=node.visible&&node.expanded; computeVisibility(c); });
+}
+
+let cursor=0;
+function firstWalk(node){
+  const kids=(node.children||[]).filter(c=>c.visible);
+  if(!node.expanded||kids.length===0){
+    node.tx=cursor*X_GAP; cursor++;
+  } else {
+    kids.forEach(firstWalk);
+    node.tx=(kids[0].tx+kids[kids.length-1].tx)/2;
+  }
+  node.ty=node.depth*Y_GAP;
+}
+
+function relayout(snap){
+  DATA.visible=true; computeVisibility(DATA);
+  cursor=0; firstWalk(DATA);
+  const shift=DATA.tx;
+  byId.forEach(n=>{ if(n.visible){ n.target={x:n.tx-shift, y:n.ty}; } });
+  // newborns grow out of their parent
+  byId.forEach(n=>{ if(n.visible&&n.opacity<0.02&&n.parent){ n.cur={x:n.parent.cur.x,y:n.parent.cur.y}; } });
+  if(snap){  // paint immediately — correct even if rAF is paused (e.g. background tab)
+    byId.forEach(n=>{ if(n.visible){ n.cur={x:n.target.x,y:n.target.y}; n.opacity=1; } else { n.opacity=0; } });
+    render(); return;
+  }
+  startAnim();
+}
+
+/* =========================================================================
+   ANIMATION + RENDER
+   ========================================================================= */
+let animating=false;
+function startAnim(){ if(!animating){ animating=true; requestAnimationFrame(tick); } }
+function tick(){
+  let moving=false;
+  byId.forEach(n=>{
+    const tx=n.visible?n.target.x:(n.parent?n.parent.cur.x:n.cur.x);
+    const ty=n.visible?n.target.y:(n.parent?n.parent.cur.y:n.cur.y);
+    n.cur.x+=(tx-n.cur.x)*0.22; n.cur.y+=(ty-n.cur.y)*0.22;
+    if(Math.abs(tx-n.cur.x)>0.4||Math.abs(ty-n.cur.y)>0.4) moving=true;
+    const to=n.visible?1:0; n.opacity+=(to-n.opacity)*0.25;
+    if(Math.abs(to-n.opacity)>0.01) moving=true;
+  });
+  render();
+  if(moving) requestAnimationFrame(tick); else animating=false;
+}
+
+let hovered=null, hoverChain=new Set();
+function ancestorsOf(node){ const s=new Set(); let n=node; while(n){s.add(n.id); n=n.parent;} return s; }
+function setHover(node){ hovered=node; hoverChain=node?ancestorsOf(node):new Set(); render(); }
+
+function render(){
+  byId.forEach(n=>{
+    const el=n.el;
+    el.style.left=(ORIGIN.x+n.cur.x)+"px";
+    el.style.top =(ORIGIN.y+n.cur.y)+"px";
+    el.style.opacity=n.opacity.toFixed(3);
+    el.style.pointerEvents=n.opacity>0.5?"auto":"none";
+    el.classList.toggle('open',!!n.expanded&&n.opacity>0.5);
+    el.classList.toggle('hl',hovered&&hoverChain.has(n.id));
+    el.classList.toggle('dim',hovered&&!hoverChain.has(n.id)&&n.opacity>0.5);
+    const k=el.querySelector('.knob'); if(k) k.textContent=n.expanded?"−":"+";
+  });
+
+  // hierarchy connectors — vertical S-curves, parent bottom -> child top
+  let base="",hi="";
+  byId.forEach(n=>{
+    if(!n.parent) return;
+    if(n.opacity<0.05||n.parent.opacity<0.05) return;
+    const p=n.parent;
+    const sx=ORIGIN.x+p.cur.x, sy=ORIGIN.y+p.cur.y+p.h/2;
+    const ex=ORIGIN.x+n.cur.x, ey=ORIGIN.y+n.cur.y-n.h/2;
+    const my=(sy+ey)/2;
+    const seg=`M${sx.toFixed(1)} ${sy.toFixed(1)} C ${sx.toFixed(1)} ${my.toFixed(1)}, ${ex.toFixed(1)} ${my.toFixed(1)}, ${ex.toFixed(1)} ${ey.toFixed(1)} `;
+    if(hovered&&hoverChain.has(n.id)&&hoverChain.has(p.id)) hi+=seg; else base+=seg;
+  });
+
+  // cross-links — arced dashed connectors, only when both homes are visible
+  let cbase="",chi="";
+  CROSSLINKS.forEach(set=>{
+    const pts=set.nodes.map(id=>byId.get(id)).filter(n=>n&&n.opacity>0.5);
+    for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+      const a=pts[i],b=pts[j];
+      const x1=ORIGIN.x+a.cur.x,y1=ORIGIN.y+a.cur.y;
+      const x2=ORIGIN.x+b.cur.x,y2=ORIGIN.y+b.cur.y;
+      const dist=Math.hypot(x2-x1,y2-y1);
+      const mx=(x1+x2)/2, my=Math.min(y1,y2)-dist*0.16;
+      const seg=`M${x1.toFixed(1)} ${y1.toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)}, ${x2.toFixed(1)} ${y2.toFixed(1)} `;
+      if(hovered&&(hovered.id===a.id||hovered.id===b.id)) chi+=seg; else cbase+=seg;
+    }
+  });
+
+  svg.innerHTML=
+    `<defs><filter id="glow" x="-60%" y="-60%" width="220%" height="220%">`+
+      `<feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>`+
+    `</filter></defs>`+
+    `<path class="xflow" d="${cbase}" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="2 6" stroke-linecap="round" opacity="0.5"/>`+
+    `<path d="${base}" fill="none" stroke="var(--line)" stroke-width="1.7" stroke-linecap="round"/>`+
+    `<path d="${hi}" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" filter="url(#glow)"/>`+
+    `<path class="xflow-hi" d="${chi}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round" filter="url(#glow)"/>`;
+}
+
+/* =========================================================================
+   INTERACTION
+   ========================================================================= */
+function collapseSubtree(n){ n.expanded=false; (n.children||[]).forEach(collapseSubtree); }
+function toggle(node){
+  const opening=!node.expanded;
+  // accordion: opening a node closes its siblings (and their open subtrees)
+  if(opening&&node.parent){ (node.parent.children||[]).forEach(sib=>{ if(sib!==node) collapseSubtree(sib); }); }
+  node.expanded=opening;
+  relayout();
+}
+function setAll(state){ byId.forEach(n=>{ if((n.children||[]).length) n.expanded=(n.id==="root")?true:state; }); DATA.expanded=true; relayout(); }
+document.getElementById('btn-expand').onclick=()=>{ setAll(true); setTimeout(fit,620); };
+document.getElementById('btn-reset').onclick =()=>{ byId.forEach(n=>n.expanded=false); DATA.expanded=true; relayout(); setTimeout(fit,420); };
+
+let view={x:0,y:0,z:1};
+function applyView(){ world.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.z})`; }
+function fit(){
+  let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9,any=false;
+  byId.forEach(n=>{ if(n.opacity>0.3){ any=true;
+    minx=Math.min(minx,n.cur.x-110); maxx=Math.max(maxx,n.cur.x+110);
+    miny=Math.min(miny,n.cur.y-n.h/2); maxy=Math.max(maxy,n.cur.y+n.h/2);} });
+  if(!any) return;
+  const padX=90, padTop=180, padBot=120;
+  const w=(maxx-minx)+padX*2, h=(maxy-miny)+padTop+padBot;
+  const z=Math.min(1.25, Math.max(0.22, Math.min(innerWidth/w, innerHeight/h)));
+  const cx=ORIGIN.x+(minx+maxx)/2;
+  view.z=z;
+  view.x=innerWidth/2-cx*z;
+  view.y=padTop-(ORIGIN.y+miny)*z;   // anchor the tree near the top (top-down flow)
+  applyView();
+}
+
+const vp=document.getElementById('viewport');
+let drag=null;
+vp.addEventListener('mousedown',e=>{ if(e.target.closest('.node')) return;
+  drag={x:e.clientX,y:e.clientY,vx:view.x,vy:view.y}; vp.classList.add('dragging'); });
+window.addEventListener('mousemove',e=>{ if(!drag) return;
+  view.x=drag.vx+(e.clientX-drag.x); view.y=drag.vy+(e.clientY-drag.y); applyView(); });
+window.addEventListener('mouseup',()=>{ drag=null; vp.classList.remove('dragging'); });
+
+vp.addEventListener('wheel',e=>{ e.preventDefault();
+  const f=e.deltaY<0?1.12:0.893; const nz=Math.min(2.4,Math.max(0.18,view.z*f));
+  const r=vp.getBoundingClientRect(); const mx=e.clientX-r.left,my=e.clientY-r.top;
+  view.x=mx-(mx-view.x)*(nz/view.z); view.y=my-(my-view.y)*(nz/view.z); view.z=nz; applyView();
+},{passive:false});
+
+function zoomBtn(f){ const nz=Math.min(2.4,Math.max(0.18,view.z*f));
+  const mx=innerWidth/2,my=innerHeight/2;
+  view.x=mx-(mx-view.x)*(nz/view.z); view.y=my-(my-view.y)*(nz/view.z); view.z=nz; applyView(); }
+document.getElementById('btn-in').onclick=()=>zoomBtn(1.18);
+document.getElementById('btn-out').onclick=()=>zoomBtn(0.85);
+document.getElementById('btn-fit').onclick=fit;
+
+/* resume animation when the tab becomes visible again (rAF pauses while hidden) */
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') startAnim(); });
+
+/* INIT — snap to layout so the map is correct on first paint regardless of tab focus */
+DATA.expanded=true; relayout(true);
+fit();
+// bloom-in entrance: branches spring out from the centre (only when visible)
+if(document.visibilityState==='visible'){
+  byId.forEach(n=>{ if(n.visible&&n.id!=='root'){ n.cur={x:0,y:0}; n.opacity=0; } });
+  startAnim();
+}
+</script>
+</body>
+</html>
